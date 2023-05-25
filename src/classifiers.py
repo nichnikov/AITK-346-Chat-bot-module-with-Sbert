@@ -4,10 +4,8 @@
 from src.data_types import Parameters
 from src.storage import ElasticClient
 from src.texts_processing import TextsTokenizer
-from src.utils import timeout
 from src.config import logger
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import util
 
 # https://stackoverflow.com/questions/492519/timeout-on-a-function-call
 
@@ -17,13 +15,12 @@ tmt = float(10)  # timeout
 class FastAnswerClassifier:
     """Объект для оперирования MatricesList и TextsStorage"""
 
-    def __init__(self, tokenizer: TextsTokenizer, parameters: Parameters, ft_model):
+    def __init__(self, tokenizer: TextsTokenizer, parameters: Parameters, model):
         self.es = ElasticClient()
         self.tkz = tokenizer
         self.prm = parameters
-        self.ft_model = ft_model
+        self.model = model
 
-    @timeout(float(tmt))
     async def searching(self, text: str, pubid: int, score: float):
         """"""
         """searching etalon by  incoming text"""
@@ -32,22 +29,21 @@ class FastAnswerClassifier:
             if tokens[0]:
                 tokens_str = " ".join(tokens[0])
                 etalons_search_result = await self.es.texts_search(self.prm.clusters_index, "LemCluster", [tokens_str])
-                # print("etalons search result:\n", etalons_search_result)
                 result_dicts = etalons_search_result[0]["search_results"]
                 if result_dicts:
                     results_tuples = [(d["ID"], d["Cluster"], d["LemCluster"]) for d in result_dicts]
+                    text_emb = self.model.encode(text)
                     ids, ets, lm_ets = zip(*results_tuples)
-                    q_vc = self.ft_model.get_sentence_vector(tokens_str)
-                    et_vcs = [self.ft_model.get_sentence_vector(lm_et) for lm_et in list(lm_ets)]
-                    et_vcs = [v.reshape(1, 100) for v in et_vcs]
-                    et_vcs = np.concatenate(et_vcs, axis=0)
-                    scores = cosine_similarity(q_vc.reshape(1, 100), et_vcs)[0]
-                    the_best_result = sorted(list(zip(ids, ets, lm_ets, scores)), key=lambda x: x[3], reverse=True)[0]
+                    candidate_embs = self.model.encode(ets)
+                    scores = util.cos_sim(text_emb, candidate_embs)
+                    print([score.item() for score in scores[0]])
+                    scores_list = [score.item() for score in scores[0]]
+                    the_best_result = sorted(list(zip(ids, ets, lm_ets, scores_list)),
+                                             key=lambda x: x[3], reverse=True)[0]
                     if the_best_result[3] >= score:
                         print("Fast Text Score:", the_best_result[3])
                         answers_search_result = await self.es.answer_search(self.prm.answers_index, the_best_result[0], pubid)
                         if answers_search_result["search_results"]:
-                                print()
                                 search_result = {"templateId": answers_search_result["search_results"][0]["templateId"],
                                                  "templateText": answers_search_result["search_results"][0]["templateText"]}
                                 logger.info("search completed successfully with result: {}".format(str(search_result)))

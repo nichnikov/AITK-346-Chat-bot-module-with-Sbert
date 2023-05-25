@@ -6,11 +6,12 @@ from src.config import (stopwords,
                         logger,
                         PROJECT_ROOT_DIR)
 from src.classifiers import FastAnswerClassifier
+from sentence_transformers import SentenceTransformer
 
 print("PROJECT_ROOT_DIR", PROJECT_ROOT_DIR)
 
-ft_model = fasttext.load_model(os.path.join(PROJECT_ROOT_DIR, "models", "bss_cbow_lem.bin"))
+model = SentenceTransformer(os.path.join("models", "expbot_paraphrase.transformers"))
 tokenizer = TextsTokenizer()
 tokenizer.add_stopwords(stopwords)
-classifier = FastAnswerClassifier(tokenizer, parameters, ft_model)
+classifier = FastAnswerClassifier(tokenizer, parameters, model)
 logger.info("service started...")

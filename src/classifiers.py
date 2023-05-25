@@ -38,6 +38,7 @@ class FastAnswerClassifier:
                     scores = util.cos_sim(text_emb, candidate_embs)
                     print([score.item() for score in scores[0]])
                     scores_list = [score.item() for score in scores[0]]
+                    print([x for x in list(zip(ids, ets, lm_ets, scores_list)) if x[3] > score])
                     the_best_result = sorted(list(zip(ids, ets, lm_ets, scores_list)),
                                              key=lambda x: x[3], reverse=True)[0]
                     if the_best_result[3] >= score:

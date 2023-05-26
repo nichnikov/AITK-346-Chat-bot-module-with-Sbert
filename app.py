@@ -6,8 +6,6 @@ from src.start import classifier
 from src.config import logger
 from src.data_types import (TemplateIds,
                             SearchData)
-from src.utils import timeit
-
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 app = FastAPI(title="ExpertBotFastText")
@@ -20,8 +18,8 @@ async def search(data: SearchData):
     logger.info("searched text: {}".format(str(data.text)))
     try:
         logger.info("searched text without spellcheck: {}".format(str(data.text)))
-        result = await classifier.searching(str(data.text), data.pubid, 0.95)
-        return {"templateId": result["templateId"], "templateText": result["templateText"], "text": str(data.text)}
+        result = await classifier.tested_searching(str(data.text), data.pubid, 0.95)
+        return result
     except Exception:
         logger.exception("Searching problem with text {} in pubid {}".format(str(data.text), str(data.pubid)))
         return {"templateId": 0, "templateText": "", "text": str(data.text)}

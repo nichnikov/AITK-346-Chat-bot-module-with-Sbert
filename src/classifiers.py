@@ -2,9 +2,13 @@
 классификатор KNeighborsClassifier в /home/an/Data/Yandex.Disk/dev/03-jira-tasks/aitk115-support-questions
 """
 from src.data_types import Parameters
+# from data_types import Parameters
 from src.storage import ElasticClient
+# from storage import ElasticClient
 from src.texts_processing import TextsTokenizer
+# from texts_processing import TextsTokenizer
 from src.config import logger
+# from config import logger
 from sentence_transformers import util
 from collections import namedtuple
 

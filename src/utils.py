@@ -2,8 +2,10 @@ import functools
 import multiprocessing.pool
 from functools import wraps
 from src.config import logger
+# from config import logger
 import pandas as pd
 from src.texts_processing import TextsTokenizer
+# from texts_processing import TextsTokenizer
 import time
 
 
